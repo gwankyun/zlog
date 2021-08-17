@@ -13,10 +13,13 @@
 #  include <lite/source_location.hpp>
 #endif
 
+#include "zlog/module.h"
+
 #if !defined(SOURCE_LOCATION_CURRENT) && USE_STD_SOURCE_LOCATION
 #  define SOURCE_LOCATION_CURRENT() std::source_location::current()
 #endif
 
+ZLOG_EXPORT_BEGIN
 namespace zlog
 {
     struct source_location
@@ -28,3 +31,4 @@ namespace zlog
 #endif
     };
 }
+ZLOG_EXPORT_END

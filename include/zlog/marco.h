@@ -1,4 +1,7 @@
 #pragma once
+#if !defined(SOURCE_LOCATION_CURRENT) && USE_STD_SOURCE_LOCATION
+#  define SOURCE_LOCATION_CURRENT() std::source_location::current()
+#endif
 
 #ifndef STRINGIFY_IMPL
 #  define STRINGIFY_IMPL(x) #x
