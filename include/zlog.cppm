@@ -17,12 +17,36 @@ namespace zlog
     template<typename T>
     inline std::string type(const std::vector<T>&)
     {
-        return std::string("std::vector<") + typeid(T).name() + ">";
+        return std::string("class std::vector<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::list<T>&)
+    {
+        return std::string("class std::list<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::set<T>&)
+    {
+        return std::string("class std::set<") + typeid(T).name() + ">";
+    }
+
+    //template<typename T, int N>
+    //inline std::string type(const std::array<T, N>&)
+    //{
+    //    return std::string("std::array<") + typeid(T).name() + "," + std::to_string(N) + ">";
+    //}
+
+    template<typename K, typename V>
+    inline std::string type(const std::map<K, V>&)
+    {
+        return std::string("class std::map<") + typeid(K).name() + "," + typeid(V).name() + ">";
     }
 
     inline std::string type(const std::string&)
     {
-        return "std::string";
+        return "class std::string";
     }
 
     struct Expression
@@ -136,23 +160,102 @@ namespace zlog
         return obj;
     }
 
+    template<typename S, typename It>
+    inline void range(S& s, It b, It e)
+    {
+        s << "{";
+        for (It i = b; i != e; ++i)
+        {
+            if (i != b)
+            {
+                s << ", ";
+            }
+            s << (*i);
+        }
+        s << "}";
+    }
+
     template<typename T, typename U>
-    LogObject<T> operator<<(LogObject<T> obj, std::vector<U> value)
+    LogObject<T> operator<<(LogObject<T> obj, const std::vector<U>& value)
     {
         if (obj)
         {
-            std::string result;
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::list<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U, int N>
+    LogObject<T> operator<<(LogObject<T> obj, const std::array<U, N>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    //template<typename T, typename K, typename V>
+    //LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
+    //{
+    //    if (obj)
+    //    {
+    //        obj.stream() << "(";
+    //        obj.stream() << value.first;
+    //        obj.stream() << ", ";
+    //        obj.stream() << value.second;
+    //        obj.stream() << ")";
+    //    }
+    //    return obj;
+    //}
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "(";
+            obj.stream() << value.first;
+            obj.stream() << ", ";
+            obj.stream() << value.second;
+            obj.stream() << ")";
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::map<K, V>& value)
+    {
+        if (obj)
+        {
             obj.stream() << "{";
-            for (size_t i = 0; i < value.size(); i++)
+            for (auto i = value.begin(); i != value.end(); ++i)
             {
-                if (i != value.size() - 1)
+                if (i != value.begin())
                 {
-                    obj.stream() << value[i] << ", ";
+                    obj.stream() << ", ";
                 }
-                else
-                {
-                    obj.stream() << value[i];
-                }
+                obj.stream() << "(" << i->first << ", " << i->second << ")";
             }
             obj.stream() << "}";
         }
