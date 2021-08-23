@@ -27,9 +27,21 @@ namespace zlog
     }
 
     template<typename T>
+    inline std::string type(const std::deque<T>&)
+    {
+        return std::string("class std::deque<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
     inline std::string type(const std::set<T>&)
     {
         return std::string("class std::set<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::stack<T>&)
+    {
+        return std::string("class std::stack<") + typeid(T).name() + ">";
     }
 
     //template<typename T, int N>
@@ -163,7 +175,7 @@ namespace zlog
     template<typename S, typename It>
     inline void range(S& s, It b, It e)
     {
-        s << "{";
+        s << "{ ";
         for (It i = b; i != e; ++i)
         {
             if (i != b)
@@ -172,7 +184,7 @@ namespace zlog
             }
             s << (*i);
         }
-        s << "}";
+        s << " }";
     }
 
     template<typename T, typename U>
@@ -205,6 +217,48 @@ namespace zlog
         return obj;
     }
 
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::deque<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::stack<U>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "{ ";
+            if (!value.empty())
+            {
+                obj.stream() << value.top() << ", ...";
+            }
+            obj.stream() << " }";
+        }
+        return obj;
+    }
+
+//#if defined(__cpp_lib_optional)
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::optional<U>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "(";
+            if (value)
+            {
+                obj.stream() << *value;
+            }
+            obj.stream() << ")";
+        }
+        return obj;
+    }
+//#endif
+
     template<typename T, typename U, int N>
     LogObject<T> operator<<(LogObject<T> obj, const std::array<U, N>& value)
     {
@@ -214,20 +268,6 @@ namespace zlog
         }
         return obj;
     }
-
-    //template<typename T, typename K, typename V>
-    //LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
-    //{
-    //    if (obj)
-    //    {
-    //        obj.stream() << "(";
-    //        obj.stream() << value.first;
-    //        obj.stream() << ", ";
-    //        obj.stream() << value.second;
-    //        obj.stream() << ")";
-    //    }
-    //    return obj;
-    //}
 
     template<typename T, typename K, typename V>
     LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
@@ -248,7 +288,7 @@ namespace zlog
     {
         if (obj)
         {
-            obj.stream() << "{";
+            obj.stream() << "{ ";
             for (auto i = value.begin(); i != value.end(); ++i)
             {
                 if (i != value.begin())
@@ -257,7 +297,7 @@ namespace zlog
                 }
                 obj.stream() << "(" << i->first << ", " << i->second << ")";
             }
-            obj.stream() << "}";
+            obj.stream() << " }";
         }
         return obj;
     }

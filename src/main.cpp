@@ -38,6 +38,17 @@ int main()
     s.insert(2);
     s.insert(3);
     ZDBG(s);
+    std::optional<int> o(1);
+    ZDBG(o);
+    std::deque<int> d{ 1, 2, 3 };
+    ZDBG(d);
+
+    std::stack<int> st;
+    st.push(1);
+    st.push(2);
+    st.push(3);
+    ZDBG(st);
+
     //int a[3];
     //a[0] = 1;
     //a[1] = 2;
