@@ -20,5 +20,6 @@
 #endif
 
 #ifndef ZDBG
-#  define ZDBG(_value) LOG() << zlog::Expression(STRINGIFY(_value)) << " = " << _value << " (" << zlog::Type(zlog::type(_value)) << ")\n";
+#  define ZDBG(_value) LOG() << zlog::Expression(STRINGIFY(_value)) << " = " << _value << " : " << zlog::Type(zlog::type(_value)) << "\n";
+//#  define ZDBG(_value) LOG() << zlog::Expression(STRINGIFY(_value)) << " = " << _value << " (" << zlog::Type(zlog::type(_value)) << ")\n";
 #endif

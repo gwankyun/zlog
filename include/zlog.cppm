@@ -39,21 +39,69 @@ namespace zlog
     }
 
     template<typename T>
+    inline std::string type(const std::multiset<T>&)
+    {
+        return std::string("class std::multiset<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
     inline std::string type(const std::stack<T>&)
     {
         return std::string("class std::stack<") + typeid(T).name() + ">";
     }
 
-    //template<typename T, int N>
-    //inline std::string type(const std::array<T, N>&)
-    //{
-    //    return std::string("std::array<") + typeid(T).name() + "," + std::to_string(N) + ">";
-    //}
+    template<typename T>
+    inline std::string type(const std::queue<T>&)
+    {
+        return std::string("class std::queue<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::priority_queue<T>&)
+    {
+        return std::string("class std::priority_queue<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::forward_list<T>&)
+    {
+        return std::string("class std::forward_list<") + typeid(T).name() + ">";
+    }
 
     template<typename K, typename V>
     inline std::string type(const std::map<K, V>&)
     {
         return std::string("class std::map<") + typeid(K).name() + "," + typeid(V).name() + ">";
+    }
+
+    template<typename K, typename V>
+    inline std::string type(const std::multimap<K, V>&)
+    {
+        return std::string("class std::multimap<") + typeid(K).name() + "," + typeid(V).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::unordered_set<T>&)
+    {
+        return std::string("class std::unordered_set<") + typeid(T).name() + ">";
+    }
+
+    template<typename T>
+    inline std::string type(const std::unordered_multiset<T>&)
+    {
+        return std::string("class std::unordered_multiset<") + typeid(T).name() + ">";
+    }
+
+    template<typename K, typename V>
+    inline std::string type(const std::unordered_map<K, V>&)
+    {
+        return std::string("class std::unordered_map<") + typeid(K).name() + "," + typeid(V).name() + ">";
+    }
+
+    template<typename K, typename V>
+    inline std::string type(const std::unordered_multimap<K, V>&)
+    {
+        return std::string("class std::unordered_multimap<") + typeid(K).name() + "," + typeid(V).name() + ">";
     }
 
     inline std::string type(const std::string&)
@@ -197,8 +245,48 @@ namespace zlog
         return obj;
     }
 
+    template<typename T, typename U, std::size_t Extent = std::dynamic_extent>
+    LogObject<T> operator<<(LogObject<T> obj, const std::span<U, Extent>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
     template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::multiset<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multiset<U>& value)
     {
         if (obj)
         {
@@ -228,14 +316,55 @@ namespace zlog
     }
 
     template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::forward_list<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename O, typename S>
+    inline void stack(O& o, S s)
+    {
+        o << "{ ";
+        if (!s.empty())
+        {
+            o << s.top() << ", ...";
+        }
+        o << " }";
+    }
+
+    template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::stack<U>& value)
+    {
+        if (obj)
+        {
+            stack(obj.stream(), value);
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::priority_queue<U>& value)
+    {
+        if (obj)
+        {
+            stack(obj.stream(), value);
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::queue<U>& value)
     {
         if (obj)
         {
             obj.stream() << "{ ";
             if (!value.empty())
             {
-                obj.stream() << value.top() << ", ...";
+                obj.stream() << value.front() << ", ... " << value.back();
             }
             obj.stream() << " }";
         }
@@ -283,21 +412,57 @@ namespace zlog
         return obj;
     }
 
+    template<typename S, typename It>
+    inline void map(S& s, It b, It e)
+    {
+        s << "{ ";
+        for (auto i = b; i != e; ++i)
+        {
+            if (i != b)
+            {
+                s << ", ";
+            }
+            s << "(" << i->first << ", " << i->second << ")";
+        }
+        s << " }";
+    }
+
     template<typename T, typename K, typename V>
     LogObject<T> operator<<(LogObject<T> obj, const std::map<K, V>& value)
     {
         if (obj)
         {
-            obj.stream() << "{ ";
-            for (auto i = value.begin(); i != value.end(); ++i)
-            {
-                if (i != value.begin())
-                {
-                    obj.stream() << ", ";
-                }
-                obj.stream() << "(" << i->first << ", " << i->second << ")";
-            }
-            obj.stream() << " }";
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::multimap<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_map<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multimap<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
         }
         return obj;
     }
@@ -375,7 +540,7 @@ namespace zlog
     {
         if (obj)
         {
-            std::string func = limitString(location.function_name(), 18);
+            std::string func = limitString(location.function_name(), 15);
 
             obj << Color("\x1b[32m");
             obj.stream() << "[";
