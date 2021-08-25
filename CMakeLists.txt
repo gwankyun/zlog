@@ -70,6 +70,7 @@ target_sources(${main}
     include/zlog/source_location.cppm
     include/zlog.hpp
     include/zlog/marco.h
+    include/zlog/module.h
     include/zlog/color.hpp
     include/zlog/color.cppm
     include/zlog/common.h

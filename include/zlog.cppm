@@ -1,4 +1,5 @@
 module;
+#include <version>
 #include "zlog/common.h"
 export module zlog;
 import std.core;
@@ -62,12 +63,6 @@ namespace zlog
         return std::string("class std::priority_queue<") + typeid(T).name() + ">";
     }
 
-    template<typename T>
-    inline std::string type(const std::forward_list<T>&)
-    {
-        return std::string("class std::forward_list<") + typeid(T).name() + ">";
-    }
-
     template<typename K, typename V>
     inline std::string type(const std::map<K, V>&)
     {
@@ -80,6 +75,7 @@ namespace zlog
         return std::string("class std::multimap<") + typeid(K).name() + "," + typeid(V).name() + ">";
     }
 
+#if CXX_VER >= 2011
     template<typename T>
     inline std::string type(const std::unordered_set<T>&)
     {
@@ -103,6 +99,13 @@ namespace zlog
     {
         return std::string("class std::unordered_multimap<") + typeid(K).name() + "," + typeid(V).name() + ">";
     }
+
+    template<typename T>
+    inline std::string type(const std::forward_list<T>&)
+    {
+        return std::string("class std::forward_list<") + typeid(T).name() + ">";
+    }
+#endif
 
     inline std::string type(const std::string&)
     {
@@ -143,7 +146,7 @@ namespace zlog
             int len = length;
             memset(func, ' ', len);
             func[len - 1] = '\0';
-            memcpy_s(func, len, str, Min(strlen(str), len - 1));
+            memcpy_s(func, len, str, std::min(strlen(str), static_cast<size_t>(len - 1)));
             result = func;
             delete[] func;
         }
@@ -235,6 +238,21 @@ namespace zlog
         s << " }";
     }
 
+    template<typename S, typename It>
+    inline void map(S& s, It b, It e)
+    {
+        s << "{ ";
+        for (auto i = b; i != e; ++i)
+        {
+            if (i != b)
+            {
+                s << ", ";
+            }
+            s << "(" << i->first << ", " << i->second << ")";
+        }
+        s << " }";
+    }
+
     template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::vector<U>& value)
     {
@@ -245,6 +263,7 @@ namespace zlog
         return obj;
     }
 
+#if HAS_SPAN
     template<typename T, typename U, std::size_t Extent = std::dynamic_extent>
     LogObject<T> operator<<(LogObject<T> obj, const std::span<U, Extent>& value)
     {
@@ -254,6 +273,7 @@ namespace zlog
         }
         return obj;
     }
+#endif
 
     template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::set<U>& value)
@@ -266,7 +286,7 @@ namespace zlog
     }
 
     template<typename T, typename U>
-    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_set<U>& value)
+    LogObject<T> operator<<(LogObject<T> obj, const std::multiset<U>& value)
     {
         if (obj)
         {
@@ -275,8 +295,9 @@ namespace zlog
         return obj;
     }
 
+#if CXX_VER >= 2011
     template<typename T, typename U>
-    LogObject<T> operator<<(LogObject<T> obj, const std::multiset<U>& value)
+    LogObject<T> operator<<(LogObject<T> obj, const std::forward_list<U>& value)
     {
         if (obj)
         {
@@ -296,6 +317,47 @@ namespace zlog
     }
 
     template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U, int N>
+    LogObject<T> operator<<(LogObject<T> obj, const std::array<U, N>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_map<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multimap<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+#endif
+
+    template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::list<U>& value)
     {
         if (obj)
@@ -307,16 +369,6 @@ namespace zlog
 
     template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::deque<U>& value)
-    {
-        if (obj)
-        {
-            range(obj.stream(), value.begin(), value.end());
-        }
-        return obj;
-    }
-
-    template<typename T, typename U>
-    LogObject<T> operator<<(LogObject<T> obj, const std::forward_list<U>& value)
     {
         if (obj)
         {
@@ -371,7 +423,7 @@ namespace zlog
         return obj;
     }
 
-//#if defined(__cpp_lib_optional)
+#if HAS_OPTIONAL
     template<typename T, typename U>
     LogObject<T> operator<<(LogObject<T> obj, const std::optional<U>& value)
     {
@@ -386,17 +438,7 @@ namespace zlog
         }
         return obj;
     }
-//#endif
-
-    template<typename T, typename U, int N>
-    LogObject<T> operator<<(LogObject<T> obj, const std::array<U, N>& value)
-    {
-        if (obj)
-        {
-            range(obj.stream(), value.begin(), value.end());
-        }
-        return obj;
-    }
+#endif
 
     template<typename T, typename K, typename V>
     LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
@@ -412,21 +454,6 @@ namespace zlog
         return obj;
     }
 
-    template<typename S, typename It>
-    inline void map(S& s, It b, It e)
-    {
-        s << "{ ";
-        for (auto i = b; i != e; ++i)
-        {
-            if (i != b)
-            {
-                s << ", ";
-            }
-            s << "(" << i->first << ", " << i->second << ")";
-        }
-        s << " }";
-    }
-
     template<typename T, typename K, typename V>
     LogObject<T> operator<<(LogObject<T> obj, const std::map<K, V>& value)
     {
@@ -439,26 +466,6 @@ namespace zlog
 
     template<typename T, typename K, typename V>
     LogObject<T> operator<<(LogObject<T> obj, const std::multimap<K, V>& value)
-    {
-        if (obj)
-        {
-            map(obj.stream(), value.begin(), value.end());
-        }
-        return obj;
-    }
-
-    template<typename T, typename K, typename V>
-    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_map<K, V>& value)
-    {
-        if (obj)
-        {
-            map(obj.stream(), value.begin(), value.end());
-        }
-        return obj;
-    }
-
-    template<typename T, typename K, typename V>
-    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multimap<K, V>& value)
     {
         if (obj)
         {
@@ -563,6 +570,7 @@ namespace zlog
     {
         if (obj)
         {
+            obj.stream() << value;
             obj.stream() << value;
         }
         return obj;

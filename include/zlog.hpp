@@ -1,56 +1,16 @@
 #pragma once
-//#ifdef _WIN32
-//#  include <Windows.h>
-//#endif
 #include <cstring>
-#include <typeinfo>
-#include <vector>
-#include <iostream>
+#include <algorithm>
 #include "zlog/common.h"
 #include "zlog/source_location.hpp"
 #include "zlog/marco.h"
 #include "zlog/color.hpp"
 
-//#ifndef Min
-//#  define Min(a, b) ((a) < (b) ? (a) : (b))
-//#endif
-
-//#ifndef EXPORT_BEGIN
-//#  define EXPORT_BEGIN
-//#endif
-//
-//#ifndef EXPORT_END
-//#  define EXPORT_END
-//#endif
-
-//#ifndef USE_CLASSIC_CONSOLE_API
-//#  if defined(_WIN32)
-//#    define USE_CLASSIC_CONSOLE_API 1
-//#  else
-//#    define USE_CLASSIC_CONSOLE_API 0
-//#  endif
-//#endif
+#include "zlog/type.hpp"
 
 ZLOG_EXPORT_BEGIN
 namespace zlog
 {
-    template<typename T>
-    inline std::string type(const T& value)
-    {
-        return typeid(value).name();
-    }
-
-    template<typename T>
-    inline std::string type(const std::vector<T>&)
-    {
-        return std::string("std::vector<") + typeid(T).name() + ">";
-    }
-
-    inline std::string type(const std::string&)
-    {
-        return "std::string";
-    }
-
     struct Expression
     {
         Expression(std::string value)
@@ -85,7 +45,7 @@ namespace zlog
             int len = length;
             memset(func, ' ', len);
             func[len - 1] = '\0';
-            memcpy_s(func, len, str, Min(strlen(str), len - 1));
+            memcpy_s(func, len, str, std::min(strlen(str), static_cast<size_t>(len - 1)));
             result = func;
             delete[] func;
         }
@@ -162,25 +122,253 @@ namespace zlog
         return obj;
     }
 
+    template<typename S, typename It>
+    inline void range(S& s, It b, It e)
+    {
+        s << "{ ";
+        for (It i = b; i != e; ++i)
+        {
+            if (i != b)
+            {
+                s << ", ";
+            }
+            s << (*i);
+        }
+        s << " }";
+    }
+
+    template<typename S, typename It>
+    inline void map(S& s, It b, It e)
+    {
+        s << "{ ";
+        for (auto i = b; i != e; ++i)
+        {
+            if (i != b)
+            {
+                s << ", ";
+            }
+            s << "(" << i->first << ", " << i->second << ")";
+        }
+        s << " }";
+    }
+
     template<typename T, typename U>
-    LogObject<T> operator<<(LogObject<T> obj, std::vector<U> value)
+    LogObject<T> operator<<(LogObject<T> obj, const std::vector<U>& value)
     {
         if (obj)
         {
-            std::string result;
-            obj.stream() << "{";
-            for (size_t i = 0; i < value.size(); i++)
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+#if HAS_SPAN
+    template<typename T, typename U, std::size_t Extent = std::dynamic_extent>
+    LogObject<T> operator<<(LogObject<T> obj, const std::span<U, Extent>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+#endif
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::multiset<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+#if CXX_VER >= 2011
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::forward_list<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multiset<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_set<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U, int N>
+    LogObject<T> operator<<(LogObject<T> obj, const std::array<U, N>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_map<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::unordered_multimap<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+#endif
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::list<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::deque<U>& value)
+    {
+        if (obj)
+        {
+            range(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename O, typename S>
+    inline void stack(O& o, S s)
+    {
+        o << "{ ";
+        if (!s.empty())
+        {
+            o << s.top() << ", ...";
+        }
+        o << " }";
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::stack<U>& value)
+    {
+        if (obj)
+        {
+            stack(obj.stream(), value);
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::priority_queue<U>& value)
+    {
+        if (obj)
+        {
+            stack(obj.stream(), value);
+        }
+        return obj;
+    }
+
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::queue<U>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "{ ";
+            if (!value.empty())
             {
-                if (i != value.size() - 1)
-                {
-                    obj.stream() << value[i] << ", ";
-                }
-                else
-                {
-                    obj.stream() << value[i];
-                }
+                obj.stream() << value.front() << ", ... " << value.back();
             }
-            obj.stream() << "}";
+            obj.stream() << " }";
+        }
+        return obj;
+    }
+
+#if HAS_OPTIONAL
+    template<typename T, typename U>
+    LogObject<T> operator<<(LogObject<T> obj, const std::optional<U>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "(";
+            if (value)
+            {
+                obj.stream() << *value;
+            }
+            obj.stream() << ")";
+        }
+        return obj;
+    }
+#endif
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::pair<K, V>& value)
+    {
+        if (obj)
+        {
+            obj.stream() << "(";
+            obj.stream() << value.first;
+            obj.stream() << ", ";
+            obj.stream() << value.second;
+            obj.stream() << ")";
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::map<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
+        }
+        return obj;
+    }
+
+    template<typename T, typename K, typename V>
+    LogObject<T> operator<<(LogObject<T> obj, const std::multimap<K, V>& value)
+    {
+        if (obj)
+        {
+            map(obj.stream(), value.begin(), value.end());
         }
         return obj;
     }
@@ -258,7 +446,7 @@ namespace zlog
     {
         if (obj)
         {
-            std::string func = limitString(location.function_name(), 18);
+            std::string func = limitString(location.function_name(), 15);
 
             obj << Color("\x1b[32m");
             obj.stream() << "[";
