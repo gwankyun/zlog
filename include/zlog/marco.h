@@ -12,7 +12,7 @@
 #endif
 
 #ifndef LOG_IF
-#  define LOG_IF(_pred) zlog::LogObject<std::ostream>(std::cout, _pred) << zlog::currentTime() << SOURCE_LOCATION_CURRENT()
+#  define LOG_IF(_pred) zlog::Stream<std::ostream>(std::cout, _pred) << zlog::currentTime() << SOURCE_LOCATION_CURRENT()
 #endif
 
 #ifndef LOG
@@ -20,6 +20,8 @@
 #endif
 
 #ifndef ZDBG
-#  define ZDBG(_value) LOG() << zlog::Expression(STRINGIFY(_value)) << " = " << _value << " : " << zlog::Type(zlog::type(_value)) << "\n";
-//#  define ZDBG(_value) LOG() << zlog::Expression(STRINGIFY(_value)) << " = " << _value << " (" << zlog::Type(zlog::type(_value)) << ")\n";
+#  define ZDBG(_value) LOG() << \
+    "\x1b[36m" << STRINGIFY(_value) << "\x1b[0m = \x1b[01m" \
+    << "" << _value << "" \
+    << "\x1b[0m (\x1b[32m" << zlog::type(_value) << "\x1b[0m)\n";
 #endif

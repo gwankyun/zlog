@@ -571,7 +571,6 @@ namespace zlog
         if (obj)
         {
             obj.stream() << value;
-            obj.stream() << value;
         }
         return obj;
     }

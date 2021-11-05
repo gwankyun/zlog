@@ -3,6 +3,7 @@ module;
 #  include "zlog/marco.h"
 #else
 #  include <iostream>
+#  include <string>
 //#  include <vector>
 #  include <zlog.hpp>
 #endif
@@ -13,8 +14,26 @@ import std.core;
 import zlog;
 #endif
 
+class Stream
+{
+public:
+    Stream()
+    {
+    }
+
+    ~Stream()
+    {
+    }
+
+private:
+
+};
+
+
 int main()
 {
+    zlog::Stream<std::ostream>(std::cout) << "\x1b[31m" << "test" << "\x1b[0m\n";
+
     ZDBG("hello");
     int i = 100;
     ZDBG(i);
@@ -128,5 +147,6 @@ int main()
     a[1] = 2;
     a[2] = 3;
     ZDBG(std::span(a));
+
     return 0;
 }

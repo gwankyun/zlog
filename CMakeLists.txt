@@ -71,8 +71,9 @@ target_sources(${main}
     include/zlog.hpp
     include/zlog/marco.h
     include/zlog/module.h
-    include/zlog/color.hpp
+    include/zlog/stream.hpp
     include/zlog/color.cppm
+    include/zlog/type.hpp
     include/zlog/common.h
     $<$<BOOL:${USE_ZLOG_MODULE}>:include/zlog.cppm>
 )
